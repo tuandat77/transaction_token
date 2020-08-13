@@ -8,64 +8,32 @@ use Web3p\EthereumTx\Transaction as TransactionHandle;
 class Transaction implements TransactionInterface
 {
     protected $util;
-    protected $privateKey;
-    protected $addressContract;
-    protected $chainId;
-    protected $amount;
-    protected $signTransactionData = array(
-        'gas' => 200000,
-        'gasPrice' => 0,
-        'value' => 0,
-    );
 
     public function __construct()
     {
         $this->util = new Util();
     }
 
-    public function setData($data)
-    {
-        $this->privateKey = $data['privateKey'];
-        $this->addressContract = $data['addressContract'];
-        $this->chainId = $data['chainId'];
-    }
-
-	public function sign($data, $nonce)
+	public function sign($data)
 	{
-        $dataTransaction = array_merge([
-            'nonce'     => $nonce,
-            'from'      => $this->getAddress(),
-            'to'        => $this->addressContract,
-            'chainId'   => $this->chainId,
-            'data'      => $data
-        ], $this->getSignTransactionData());
+        $dataTransaction = [
+            'nonce'     => $data['nonce'],
+            'from'      => $this->getAddress($data['privateKey']),
+            'to'        => $data['addressContract'],
+            'chainId'   => $data['chainId'],
+            'gas' => $data['gas'],
+            'gasPrice' => $data['gasPrice'],
+            'value' => $data['value'],
+            'data'      => $data['transactionData']
+        ];
 
-        return (new TransactionHandle($dataTransaction))->sign($this->privateKey);
+        return (new TransactionHandle($dataTransaction))->sign($data['privateKey']);
 	}
 
-    public function getAddress()
-    {
-        return $this->convertPrivateKeyToAddress();
-    }
-
-    public function convertPrivateKeyToAddress()
+    public function getAddress(string $privateKey)
     {
         return $this->util->publicKeyToAddress(
-            $this->util->privateKeyToPublicKey($this->privateKey)
+            $this->util->privateKeyToPublicKey($privateKey)
         );
     }
-
-    public function getSignTransactionData()
-    {
-        return $this->signTransactionData;
-    }
-
-    public function setSignTransactionData($data)
-    {
-        $this->signTransactionData = array_merge(
-            $this->signTransactionData,
-            $data
-        );
-    }
-
 }

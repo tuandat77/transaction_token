@@ -52,10 +52,4 @@ trait RPCTraits
 
         return $this->unitMap[$unit];
     }
-
-    public function readFileJson($file)
-    {
-        $dataJson = file_get_contents($file);
-        return json_decode($dataJson);
-    }
 }

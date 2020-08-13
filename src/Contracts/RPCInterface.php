@@ -3,12 +3,12 @@ namespace Ezdefi\Poc\Contracts;
 
 interface RPCInterface
 {
-    public function setData($data);
+    public function setConfig(array $config);
 
-	public function getTransactionCount(string $url, string $data);
+	public function getTransactionCount(string $data);
 
-    public function getDataInTransaction(string $methodName);
+    public function getDataInTransaction(string $methodName, string $addressTo, string $amount);
 
-    public function sendRawTransaction(string $url, string $signTransaction);
+    public function sendRawTransaction(string $signTransaction);
 
 }

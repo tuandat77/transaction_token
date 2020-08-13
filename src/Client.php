@@ -12,23 +12,32 @@ class Client
 
 	public function sendTransaction(array $data)
 	{
-        $transactionClient = $this->getTransaction();
-        $transactionClient->setData($data);
-
+        $transaction = $this->getTransaction();
         $RPC = $this->getRPC();
-        $RPC->setData($data);
 
-		$addressFrom = $transactionClient->getAddress();
+        $abiData = $this->readFileJson($data['rpc_config']['abi_json_file_path']);
+        if(!is_array($abiData)) {
+            throw new \Exception('co loi');
+        }
+        $data['rpc_config']['abi_data'] = $abiData;
+        unset($data['rpc_config']['abi_json_file_path']);
+        $RPC->setConfig($data['rpc_config']);
 
-        $nonce = $RPC->getTransactionCount('https://rpc.nexty.io', $addressFrom);
+        // if not addressTo, if not amout
 
-        $transactionData = $RPC->getDataInTransaction('transfer');
+        $data['transaction_data']['transactionData'] = $RPC->getDataInTransaction(
+            'transfer',
+            $data['transaction_data']['addressTo'],
+            $data['transaction_data']['amount']
+        );
 
-		$signedData = $transactionClient->sign($transactionData, $nonce);
+        // if not private key
 
-//		return $RPC->sendRawTransaction('https://rpc.nexty.io', $signedData);
-		$dataHash = $RPC->sendRawTransaction('https://rpc.nexty.io', $signedData);
-		var_dump($dataHash);
+        $data['transaction_data']['nonce'] = $RPC->getTransactionCount($transaction->getAddress($data['transaction_data']['privateKey']));
+
+		$signedData = $transaction->sign($data['transaction_data']);
+
+		return $RPC->sendRawTransaction($signedData);
 	}
 
 	public function getRPC() :RPCInterface
@@ -58,4 +67,11 @@ class Client
 	{
 		$this->transaction = $transaction;
 	}
+
+    protected function readFileJson(string $path)
+    {
+        $dataJson = file_get_contents($path);
+
+        return json_decode($dataJson);
+    }
 }

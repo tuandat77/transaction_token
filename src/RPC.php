@@ -12,39 +12,37 @@ use Ethereum\Abi;
 class RPC implements RPCInterface
 {
 	use RPCTraits;
-    protected $abiData;
-    protected $addressTo;
-    protected $amount;
 
-    public function setData($data)
-    {
-        $this->amount = $data['amount'];
-        $this->addressTo = $data['addressTo'];
-    }
+    protected $config;
 
-	public function sendRawTransaction(string $url, string $signTransaction)
+	public function sendRawTransaction(string $signTransaction)
 	{
-        return ( new Ethereum( $url ) )->eth_sendRawTransaction(
-            new EthD("0x".$signTransaction)
+        return $this->getEthereumInstance()->eth_sendRawTransaction(
+            $this->getEthDataType( 'D' , "0x".$signTransaction)
         )->encodedHexVal();
 	}
 
-    public function getTransactionCount(string $url, string $data)
+    public function getTransactionCount(string $addressFrom)
     {
-        return ( new Ethereum( $url))->eth_getTransactionCount(
-            new EthD20($data),
+        return $this->getEthereumInstance()->eth_getTransactionCount(
+            $this->getEthDataType('D20', $addressFrom),
             new EthBlockParam()
         )->val();
 	}
 
-    public function getDataInTransaction(string $methodName)
+	protected function getEthereumInstance()
+    {
+        return new Ethereum($this->config['url']);
+    }
+
+    public function getDataInTransaction(string $methodName, string $addressTo, string $amount)
     {
         return $this->refactorData(
             $this->getAbiClass()->encodeFunction(
                 $methodName,
                 array(
-                    $this->getEthDataType('D', $this->addressTo),
-                    $this->getEthDataType('D', $this->amountToWei())
+                    $this->getEthDataType('D', $addressTo),
+                    $this->getEthDataType('D', $this->amountToWei($amount))
                 )
             )->encodedHexVal()
         );
@@ -52,44 +50,48 @@ class RPC implements RPCInterface
 
     protected function getEthDataType($type, $value)
     {
+        // View Ezdefi SDK
         $result = null;
 
         switch ($type) {
             case 'D20':
-                $result = new EthD20($value);
+                try {
+                    $result = new EthD20($value);
+                } catch (\Exception $e) {
+                    throw new \InvalidArgumentException($e->getMessage());
+                }
                 break;
             case 'D':
-                $result = new EthD($value);
+                try {
+                    $result = new EthD($value);
+                } catch (\Exception $e) {
+                    throw new \InvalidArgumentException($e->getMessage());
+                }
+
                 break;
         }
 
         return $result;
     }
 
-    public function getAbiData()
+    public function getConfig()
     {
-        if(is_null($this->abiData)) {
-            $this->abiData = $this->readFileJson('http://localhost/ezdefi-send-token/poc_token_abi.json');
-        }
-
-        return $this->abiData;
+        return $this->config;
     }
 
-    public function setAbiData(array $data)
+    public function setConfig(array $config)
     {
-        $this->abiData = $data;
+        $this->config = $config;
     }
 
     public function getAbiClass() : Abi
     {
-        return new Abi(
-            $this->getAbiData()
-        );
+        return new Abi( $this->config['abi_data'] );
     }
 
-    public function amountToWei()
+    public function amountToWei($amount)
     {
-        $amount = strval($this->amount);
+        $amount = strval($amount);
         $amount = $this->toWei($amount);
         $amountHex = $this->bcdechex($amount);
         return $amountHex;
