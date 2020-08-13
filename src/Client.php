@@ -1,4 +1,8 @@
 <?php
+namespace Ezdefi\Poc;
+
+use Ezdefi\Poc\Contracts\RPCInterface;
+use Ezdefi\Poc\Contracts\TransactionInterface;
 
 class Client
 {
@@ -8,31 +12,49 @@ class Client
 
 	public function sendTransaction(array $data)
 	{
-		$transactionData = $this->rpc->getTransactionData($data);
+        $transactionClient = $this->getTransaction();
+        $transactionClient->setData($data);
 
-		$signedData = $this->transaction->sign($transactionData);
+        $RPC = $this->getRPC();
+        $RPC->setData($data);
 
-		return $this->rpc->sendRawTransaction($signedData);
+		$addressFrom = $transactionClient->getAddress();
+
+        $nonce = $RPC->getTransactionCount('https://rpc.nexty.io', $addressFrom);
+
+        $transactionData = $RPC->getDataInTransaction('transfer');
+
+		$signedData = $transactionClient->sign($transactionData, $nonce);
+
+//		return $RPC->sendRawTransaction('https://rpc.nexty.io', $signedData);
+		$dataHash = $RPC->sendRawTransaction('https://rpc.nexty.io', $signedData);
+		var_dump($dataHash);
 	}
 
-	public function getRPC()
+	public function getRPC() :RPCInterface
 	{
-		// If null
-			// return RPC instance
+        if(is_null($this->rpc)){
+            $this->rpc = new RPC();
+        }
+
+        return $this->rpc;
 	}
 
-	public function setRPC(RPCInterface $rpc) : RPCInterface
+	public function setRPC(RPCInterface $rpc)
 	{
 		$this->rpc = $rpc;
 	}
 
-	public function getTransaction()
+	public function getTransaction() : TransactionInterface
 	{
-		// If null
-			// return Transaction instance
+        if(is_null($this->transaction)) {
+            $this->transaction = new Transaction();
+        }
+
+        return $this->transaction;
 	}
 
-	public function setTransaction(TransactionInterface $transaction) : TransactionInterface
+	public function setTransaction(TransactionInterface $transaction)
 	{
 		$this->transaction = $transaction;
 	}
