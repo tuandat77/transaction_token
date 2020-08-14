@@ -32,6 +32,9 @@ class RPC implements RPCInterface
 
 	protected function getEthereumInstance()
     {
+        if(empty($this->config['url']) || !is_string($this->config['url'])) {
+            throw new \Exception('Invalid Url connection to node');
+        }
         return new Ethereum($this->config['url']);
     }
 
@@ -50,9 +53,7 @@ class RPC implements RPCInterface
 
     protected function getEthDataType($type, $value)
     {
-        // View Ezdefi SDK
         $result = null;
-
         switch ($type) {
             case 'D20':
                 try {
@@ -67,10 +68,8 @@ class RPC implements RPCInterface
                 } catch (\Exception $e) {
                     throw new \InvalidArgumentException($e->getMessage());
                 }
-
                 break;
         }
-
         return $result;
     }
 

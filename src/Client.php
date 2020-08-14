@@ -15,23 +15,38 @@ class Client
         $transaction = $this->getTransaction();
         $RPC = $this->getRPC();
 
-        $abiData = $this->readFileJson($data['rpc_config']['abi_json_file_path']);
-        if(!is_array($abiData)) {
-            throw new \Exception('co loi');
+        if(empty($data['rpc_config']['abi_json_file_path']) || !is_string($data['rpc_config']['abi_json_file_path'])){
+            throw new \Exception('Invalid file path abi json');
         }
+
+        $abiData = $this->readFileJson($data['rpc_config']['abi_json_file_path']);
+
+        if(!is_array($abiData)) {
+            throw new \Exception('Invalid read file abi Json');
+        }
+
         $data['rpc_config']['abi_data'] = $abiData;
         unset($data['rpc_config']['abi_json_file_path']);
         $RPC->setConfig($data['rpc_config']);
 
-        // if not addressTo, if not amout
+        if(empty($data['transaction_data']['addressTo']) || !is_string($data['transaction_data']['addressTo'])
+            || empty($data['transaction_data']['amount']) || !is_string($data['transaction_data']['amount'])) {
+            throw new \Exception('Invalid address to and amount');
+        }
 
-        $data['transaction_data']['transactionData'] = $RPC->getDataInTransaction(
-            'transfer',
-            $data['transaction_data']['addressTo'],
-            $data['transaction_data']['amount']
-        );
+        try {
+            $data['transaction_data']['transactionData'] = $RPC->getDataInTransaction(
+                'transfer',
+                $data['transaction_data']['addressTo'],
+                $data['transaction_data']['amount']
+            );
+        } catch (\Exception $e) {
+            throw new \Exception($e->getMessage());
+        }
 
-        // if not private key
+        if(empty($data['transaction_data']['privateKey']) || !is_string($data['transaction_data']['privateKey'])) {
+            throw new \Exception('Invalid privateKey');
+        }
 
         $data['transaction_data']['nonce'] = $RPC->getTransactionCount($transaction->getAddress($data['transaction_data']['privateKey']));
 
@@ -71,7 +86,9 @@ class Client
     protected function readFileJson(string $path)
     {
         $dataJson = file_get_contents($path);
-
+        if(!$dataJson) {
+            throw new \Exception('Get file error');
+        }
         return json_decode($dataJson);
     }
 }

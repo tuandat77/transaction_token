@@ -52,4 +52,58 @@ trait RPCTraits
 
         return $this->unitMap[$unit];
     }
+
+    public function validateLength($val)
+    {
+        $un_padded = $this->unPadEnsureLength($val);
+        if ($un_padded) {
+            return $un_padded;
+        } else {
+            throw new \Exception('Invalid length for hex binary: ' . $val);
+        }
+    }
+    public static function hasHexPrefix($str)
+    {
+        return substr($str, 0, 2) === '0x';
+    }
+    public static function ensureHexPrefix($str)
+    {
+        if (self::hasHexPrefix($str)) {
+            return $str;
+        }
+        return '0x' . $str;
+    }
+    public static function unPadEnsureLength($string)
+    {
+        // Remove leading zeros.
+        // See: https://regex101.com/r/O2Rpei/5
+        $matches = [];
+        if (preg_match('/^0x0*([0-9,a-f]{40})$/is', self::ensureHexPrefix($string), $matches)) {
+            $address = '0x' . $matches[1];
+            // Throws an Exception if not valid.
+            if (self::isValidAddress($address, true)) {
+                return $address;
+            }
+        }
+        return null;
+    }
+    public static function isValidAddress($address, $throw = false)
+    {
+        if (!self::hasHexPrefix($address)) {
+            return false;
+        }
+        // Address should be 20bytes=40 HEX-chars + prefix.
+        if (strlen($address) !== 42) {
+            return false;
+        }
+        $return = ctype_xdigit(self::removeHexPrefix($address));
+        return $return;
+    }
+    public static function removeHexPrefix($str)
+    {
+        if (!self::hasHexPrefix($str)) {
+            return $str;
+        }
+        return substr($str, 2);
+    }
 }
