@@ -9,6 +9,7 @@
             "email": "support@ezdefi.com"
         }
     ],
+    "minimum-stability":"dev",
     "autoload": {
         "psr-4": {
             "Ezdefi\\Poc\\": "src/",
@@ -20,9 +21,15 @@
             "Ezdefi\\Tests\\Poc\\": "tests"
         }
     },
+    "repositories": [
+        {
+            "type": "git",
+            "url": "https://github.com/digitaldonkey/ethereum-php.git"
+        }
+    ],
     "require": {
         "web3p/ethereum-tx" : "0.4.0",
-        "digitaldonkey/ethereum-php": "*",
+        "digitaldonkey/ethereum-php": "dev-master",
         "moontoast/math": "*"
     },
     "require-dev": {
