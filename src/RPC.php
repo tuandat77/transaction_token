@@ -8,6 +8,9 @@ use Ethereum\DataType\EthD;
 use Ethereum\DataType\EthD20;
 use Ethereum\DataType\EthBlockParam;
 use Ethereum\Abi;
+use Ethereum\DataType\EthQ;
+use Ethereum\DataType\EthD32;
+use Ethereum\DataType\EthS;
 
 class RPC implements RPCInterface
 {
@@ -18,7 +21,7 @@ class RPC implements RPCInterface
 	public function sendRawTransaction(string $signTransaction)
 	{
         return $this->getEthereumInstance()->eth_sendRawTransaction(
-            $this->getEthDataType( 'D' , "0x".$signTransaction)
+            $this->getEthDataType( 'D' , $signTransaction)
         )->encodedHexVal();
 	}
 
@@ -38,18 +41,38 @@ class RPC implements RPCInterface
         return new Ethereum($this->config['url']);
     }
 
-    public function getDataInTransaction(string $methodName, string $addressTo, string $amount)
+//    public function getDataInTransaction(string $methodName, string $addressTo, string $amount)
+    public function getDataInTransaction(string $methodName, array $param)
     {
+        if ( $methodName == 'addTransaction' ) {
+            $dataAbiPocPool = new AbiPocPool($this->config['abi_data']);
+            return $dataAbiPocPool->encodeFunction($methodName, $param);
+        }
+
+       $param = $this->refactorDataOfArrayPramAbi($param);
         return $this->refactorData(
             $this->getAbiClass()->encodeFunction(
                 $methodName,
-                array(
-                    $this->getEthDataType('D', $addressTo),
-                    $this->getEthDataType('D', $this->amountToWei($amount))
-                )
+                $param
             )->encodedHexVal()
         );
 	}
+
+	public function refactorDataOfArrayPramAbi($data)
+    {
+        if(isset($data['amount'])) {
+            $data['amount'] = $this->amountToWei($data['amount']);
+        }
+
+        if (isset($data['_amount'])) {
+            $data['_amount'] = $this->amountToWei($data['_amount']);
+        }
+        $dataInsert = [];
+        foreach ($data as $key => $value){
+            $dataInsert[] = $this->getEthDataType('D', $value);
+        }
+        return $dataInsert;
+    }
 
     protected function getEthDataType($type, $value)
     {
@@ -65,6 +88,27 @@ class RPC implements RPCInterface
             case 'D':
                 try {
                     $result = new EthD($value);
+                } catch (\Exception $e) {
+                    throw new \InvalidArgumentException($e->getMessage());
+                }
+                break;
+            case 'Q':
+                try {
+                    $result = new EthQ($value);
+                } catch (\Exception $e) {
+                    throw new \InvalidArgumentException($e->getMessage());
+                }
+                break;
+            case 'D32':
+                try {
+                    $result = new EthD32($value);
+                } catch (\Exception $e) {
+                    throw new \InvalidArgumentException($e->getMessage());
+                }
+                break;
+            case 'S':
+                try {
+                    $result = new EthS($value);
                 } catch (\Exception $e) {
                     throw new \InvalidArgumentException($e->getMessage());
                 }

@@ -29,16 +29,10 @@ class Client
         unset($data['rpc_config']['abi_json_file_path']);
         $RPC->setConfig($data['rpc_config']);
 
-        if(empty($data['transaction_data']['addressTo']) || !is_string($data['transaction_data']['addressTo'])
-            || empty($data['transaction_data']['amount']) || !is_string($data['transaction_data']['amount'])) {
-            throw new \Exception('Invalid address to and amount');
-        }
-
         try {
             $data['transaction_data']['transactionData'] = $RPC->getDataInTransaction(
-                'transfer',
-                $data['transaction_data']['addressTo'],
-                $data['transaction_data']['amount']
+                $data['rpc_config']['name_abi'],
+                $data['param']
             );
         } catch (\Exception $e) {
             throw new \Exception($e->getMessage());
