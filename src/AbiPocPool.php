@@ -1,12 +1,8 @@
 <?php
 namespace Ezdefi\Poc;
 
-use Ethereum\DataType\EthD;
-use Ethereum\DataType\EthDataType;
 use Ethereum\DataType\EthQ;
-use Ethereum\DataType\EthS;
 use Ethereum\EthereumStatic;
-use Ethereum\RLP\Rlp;
 use Ezdefi\Poc\Traits\RPCTraits;
 use Web3p\RLP\Types\Str;
 use InvalidArgumentException;

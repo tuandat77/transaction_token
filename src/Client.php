@@ -3,9 +3,11 @@ namespace Ezdefi\Poc;
 
 use Ezdefi\Poc\Contracts\RPCInterface;
 use Ezdefi\Poc\Contracts\TransactionInterface;
-
+use Ezdefi\Poc\Traits\RPCTraits;
 class Client
 {
+    use RPCTraits;
+
 	public $rpc = null;
 
 	public $transaction = null;
@@ -84,5 +86,13 @@ class Client
             throw new \Exception('Get file error');
         }
         return json_decode($dataJson);
+    }
+
+    public function amountToWei($amount)
+    {
+        $amount = strval($amount);
+        $amount = $this->toWei($amount);
+        $amountHex = $this->bcdechex($amount);
+        return $amountHex;
     }
 }

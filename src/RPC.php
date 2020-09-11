@@ -41,7 +41,6 @@ class RPC implements RPCInterface
         return new Ethereum($this->config['url']);
     }
 
-//    public function getDataInTransaction(string $methodName, string $addressTo, string $amount)
     public function getDataInTransaction(string $methodName, array $param)
     {
         if ( $methodName == 'addTransaction' ) {

@@ -66,6 +66,7 @@ trait RPCTraits
     {
         return substr($str, 0, 2) === '0x';
     }
+
     public static function ensureHexPrefix($str)
     {
         if (self::hasHexPrefix($str)) {
@@ -73,6 +74,7 @@ trait RPCTraits
         }
         return '0x' . $str;
     }
+
     public static function unPadEnsureLength($string)
     {
         // Remove leading zeros.
@@ -87,6 +89,7 @@ trait RPCTraits
         }
         return null;
     }
+
     public static function isValidAddress($address, $throw = false)
     {
         if (!self::hasHexPrefix($address)) {
@@ -99,6 +102,7 @@ trait RPCTraits
         $return = ctype_xdigit(self::removeHexPrefix($address));
         return $return;
     }
+
     public static function removeHexPrefix($str)
     {
         if (!self::hasHexPrefix($str)) {
