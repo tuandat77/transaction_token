@@ -17,18 +17,43 @@ class Client
         $transaction = $this->getTransaction();
         $RPC = $this->getRPC();
 
-        if(empty($data['rpc_config']['abi_json_file_path']) || !is_string($data['rpc_config']['abi_json_file_path'])){
-            throw new \Exception('Invalid file path abi json');
+        if(empty($data['rpc_config']['abi_json_file_path_token']) || !is_string($data['rpc_config']['abi_json_file_path_token'])){
+            throw new \Exception('Invalid file path abi json token');
         }
 
-        $abiData = $this->readFileJson($data['rpc_config']['abi_json_file_path']);
+        $abiDataToken   = $this->readFileJson($data['rpc_config']['abi_json_file_path_token']);
 
-        if(!is_array($abiData)) {
+        if(!is_array($abiDataToken)) {
             throw new \Exception('Invalid read file abi Json');
         }
 
-        $data['rpc_config']['abi_data'] = $abiData;
-        unset($data['rpc_config']['abi_json_file_path']);
+        $data['rpc_config']['abi_data_token'] = $abiDataToken;
+
+        unset($data['rpc_config']['abi_json_file_path_token']);
+
+        if($data['rpc_config']['name_abi'] === 'addTransaction') {
+
+            if(empty($data['rpc_config']['abi_json_file_path_pool']) || !is_string($data['rpc_config']['abi_json_file_path_pool'])){
+                throw new \Exception('Invalid file path abi json pool');
+            }
+
+            $abiDataPool = $this->readFileJson($data['rpc_config']['abi_json_file_path_pool']);
+
+            if(!is_array($abiDataPool)) {
+                throw new \Exception('Invalid read file abi Json');
+            }
+
+            $data['rpc_config']['abi_data_pool'] = $abiDataPool;
+
+            unset($data['rpc_config']['abi_json_file_path_pool']);
+
+            if(empty($data['transaction_data']['addressContractPool']) || !is_string($data['transaction_data']['addressContractPool'])){
+                throw new \Exception('Invalid address contract pool');
+            }
+
+            $data['param']['addressContractPool'] = $data['transaction_data']['addressContractPool'];
+        }
+
         $RPC->setConfig($data['rpc_config']);
 
         try {
@@ -44,11 +69,21 @@ class Client
             throw new \Exception('Invalid privateKey');
         }
 
+        $data['transaction_data']['name_abi'] = $data['rpc_config']['name_abi'];
+
         $data['transaction_data']['nonce'] = $RPC->getTransactionCount($transaction->getAddress($data['transaction_data']['privateKey']));
 
 		$signedData = $transaction->sign($data['transaction_data']);
 
-		return $RPC->sendRawTransaction($signedData);
+		if( $signedData < 2 ){
+		    return $RPC->sendRawTransaction($signedData);
+        }
+
+		$hash = [];
+		foreach ( $signedData as $key => $item ) {
+            $hash[] = $RPC->sendRawTransaction($item);
+        }
+		return $hash[count($signedData) - 1];
 	}
 
 	public function getRPC() :RPCInterface

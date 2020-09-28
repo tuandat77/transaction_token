@@ -44,28 +44,41 @@ class RPC implements RPCInterface
     public function getDataInTransaction(string $methodName, array $param)
     {
         if ( $methodName == 'addTransaction' ) {
-            $dataAbiPocPool = new AbiPocPool($this->config['abi_data']);
-            return $dataAbiPocPool->encodeFunction($methodName, $param);
+            $param_approve = [
+                'recipient' =>  $param['addressContractPool'],
+                'amount'    =>  $param['_amount']
+            ];
+
+            $param_approve = $this->refactorDataOfArrayPramAbi($param_approve);
+            $dataTxApprove = $this->refactorData(
+                $this->getAbiClass()->encodeFunction(
+                    'approve',
+                    $param_approve
+                )->encodedHexVal()
+            );
+            unset($param['addressContractPool']);
+            $dataAbiPocPool = new AbiPocPool($this->config['abi_data_pool']);
+            $dataTxAddTransaction = $dataAbiPocPool->encodeFunction($methodName, $param);
+            return array(
+                'dataTx' => $dataTxApprove,
+                'dataTxAddTransaction' => $dataTxAddTransaction
+            );
         }
 
        $param = $this->refactorDataOfArrayPramAbi($param);
-        return $this->refactorData(
+       $dataTx =  $this->refactorData(
             $this->getAbiClass()->encodeFunction(
                 $methodName,
                 $param
             )->encodedHexVal()
         );
+       return array(
+           'dataTx' => $dataTx,
+       );
 	}
 
 	public function refactorDataOfArrayPramAbi($data)
     {
-        if(isset($data['amount'])) {
-            $data['amount'] = $this->amountToWei($data['amount']);
-        }
-
-        if (isset($data['_amount'])) {
-            $data['_amount'] = $this->amountToWei($data['_amount']);
-        }
         $dataInsert = [];
         foreach ($data as $key => $value){
             $dataInsert[] = $this->getEthDataType('D', $value);
@@ -128,15 +141,12 @@ class RPC implements RPCInterface
 
     public function getAbiClass() : Abi
     {
-        return new Abi( $this->config['abi_data'] );
+        return new Abi( $this->config['abi_data_token'] );
     }
 
-    public function amountToWei($amount)
+    public function getAbiClassPool() : Abi
     {
-        $amount = strval($amount);
-        $amount = $this->toWei($amount);
-        $amountHex = $this->bcdechex($amount);
-        return $amountHex;
+        return new Abi( $this->config['abi_data_pool'] );
     }
 
 }
