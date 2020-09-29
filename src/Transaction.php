@@ -19,7 +19,6 @@ class Transaction implements TransactionInterface
 	public function sign($data)
 	{
 
-
         if(empty($data['chainId']) || !is_numeric($data['chainId']) ) {
             throw new \InvalidArgumentException('Invalid chainId');
         }
@@ -68,7 +67,7 @@ class Transaction implements TransactionInterface
     protected function sign_for_token($data)
     {
         if(empty($data['addressContractToken']) || !is_string($data['addressContractToken'])){
-            throw new \Exception('Invalid address contract token');
+            throw new \Exception('Invalid address contract token and not address contract token');
         }
 
         $dataTransaction = [
@@ -89,7 +88,7 @@ class Transaction implements TransactionInterface
     protected function sign_for_pool( $data )
     {
         if(empty($data['addressContractPool']) || !is_string($data['addressContractPool'])){
-            throw new \Exception('Invalid address contract pool');
+            throw new \Exception('Invalid address contract pool or not address contract pool');
         }
 
         $dataTransaction = [

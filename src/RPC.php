@@ -143,10 +143,4 @@ class RPC implements RPCInterface
     {
         return new Abi( $this->config['abi_data_token'] );
     }
-
-    public function getAbiClassPool() : Abi
-    {
-        return new Abi( $this->config['abi_data_pool'] );
-    }
-
 }

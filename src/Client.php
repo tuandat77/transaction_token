@@ -4,6 +4,8 @@ namespace Ezdefi\Poc;
 use Ezdefi\Poc\Contracts\RPCInterface;
 use Ezdefi\Poc\Contracts\TransactionInterface;
 use Ezdefi\Poc\Traits\RPCTraits;
+use http\Message;
+
 class Client
 {
     use RPCTraits;
@@ -17,15 +19,11 @@ class Client
         $transaction = $this->getTransaction();
         $RPC = $this->getRPC();
 
-        if(empty($data['rpc_config']['abi_json_file_path_token']) || !is_string($data['rpc_config']['abi_json_file_path_token'])){
-            throw new \Exception('Invalid file path abi json token');
-        }
+        $this->checkEmptyAndString($data['rpc_config']['abi_json_file_path_token'], 'Invalid file path abi json token' );
 
         $abiDataToken   = $this->readFileJson($data['rpc_config']['abi_json_file_path_token']);
 
-        if(!is_array($abiDataToken)) {
-            throw new \Exception('Invalid read file abi Json');
-        }
+        $this->checkArray($abiDataToken, 'Invalid read file abi token json');
 
         $data['rpc_config']['abi_data_token'] = $abiDataToken;
 
@@ -33,23 +31,17 @@ class Client
 
         if($data['rpc_config']['name_abi'] === 'addTransaction') {
 
-            if(empty($data['rpc_config']['abi_json_file_path_pool']) || !is_string($data['rpc_config']['abi_json_file_path_pool'])){
-                throw new \Exception('Invalid file path abi json pool');
-            }
+            $this->checkEmptyAndString($data['rpc_config']['abi_json_file_path_pool'], 'Invalid file path abi json pool');
 
             $abiDataPool = $this->readFileJson($data['rpc_config']['abi_json_file_path_pool']);
 
-            if(!is_array($abiDataPool)) {
-                throw new \Exception('Invalid read file abi Json');
-            }
+            $this->checkArray($abiDataPool, 'Invalid read file abi pool json');
 
             $data['rpc_config']['abi_data_pool'] = $abiDataPool;
 
             unset($data['rpc_config']['abi_json_file_path_pool']);
 
-            if(empty($data['transaction_data']['addressContractPool']) || !is_string($data['transaction_data']['addressContractPool'])){
-                throw new \Exception('Invalid address contract pool');
-            }
+            $this->checkEmptyAndString($data['transaction_data']['addressContractPool'], 'Invalid address contract pool');
 
             $data['param']['addressContractPool'] = $data['transaction_data']['addressContractPool'];
         }
@@ -65,9 +57,7 @@ class Client
             throw new \Exception($e->getMessage());
         }
 
-        if(empty($data['transaction_data']['privateKey']) || !is_string($data['transaction_data']['privateKey'])) {
-            throw new \Exception('Invalid privateKey');
-        }
+        $this->checkEmptyAndString($data['transaction_data']['privateKey'] , 'Invalid privateKey' );
 
         $data['transaction_data']['name_abi'] = $data['rpc_config']['name_abi'];
 
@@ -129,5 +119,19 @@ class Client
         $amount = $this->toWei($amount);
         $amountHex = $this->bcdechex($amount);
         return $amountHex;
+    }
+
+    protected function checkEmptyAndString($data, $message)
+    {
+        if(empty($data) || !is_string($data)) {
+            throw new \Exception($message);
+        }
+    }
+
+    protected function checkArray($data, $message)
+    {
+        if(!is_array($data)) {
+            throw new \Exception($message);
+        }
     }
 }
